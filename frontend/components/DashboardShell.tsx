@@ -14,7 +14,6 @@ const pages = [
   { label: 'Logging', href: '/logging' },
   { label: 'Security', href: '/security' }
 ]
-const pages = ['Dashboard', 'Mountpoints', 'Listeners', 'Sources', 'Relays', 'Configuration', 'Logs', 'Security', 'Authentication', 'Statistics']
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
@@ -25,8 +24,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           {pages.map((page) => (
             <Link key={page.label} href={page.href} className="block text-sm text-zinc-300 hover:text-white">
               {page.label}
-            <Link key={page} href="#" className="block text-sm text-zinc-300 hover:text-white">
-              {page}
             </Link>
           ))}
         </nav>

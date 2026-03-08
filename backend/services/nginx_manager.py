@@ -1,5 +1,7 @@
 import json
+import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 SETTINGS_PATH = Path('/data/control/nginx_settings.json')
@@ -7,6 +9,7 @@ TEMPLATE_PATH = Path('/data/control/templates/icecast.conf.tpl')
 OUTPUT_PATH = Path('/etc/nginx/conf.d/icecast.conf')
 CERT_DIR = Path('/etc/ssl/certs')
 KEY_DIR = Path('/etc/ssl/private')
+BACKUP_DIR = Path('/etc/nginx/backups')
 
 DEFAULT_SETTINGS = {
     'domain': 'localhost',
@@ -102,14 +105,27 @@ def _cloudflare_real_ip(enabled: bool) -> str:
     return '\n    '.join(lines)
 
 
+
+
+def backup_nginx_config() -> str:
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    target = BACKUP_DIR / f'icecast-{ts}.conf'
+    if OUTPUT_PATH.exists():
+        shutil.copy2(OUTPUT_PATH, target)
+    else:
+        target.write_text('', encoding='utf-8')
+    return str(target)
+
 def apply_nginx_config(settings: dict) -> dict:
+    backup = backup_nginx_config()
     rendered = render_config(settings)
     OUTPUT_PATH.write_text(rendered, encoding='utf-8')
     test = _run(['nginx', '-t'])
     if not test['ok']:
         return {'ok': False, 'step': 'nginx -t', **test}
     reload_res = _run(['systemctl', 'reload', 'nginx'])
-    return {'ok': reload_res['ok'], 'config_path': str(OUTPUT_PATH), 'test': test, 'reload': reload_res}
+    return {'ok': reload_res['ok'], 'backup': backup, 'config_path': str(OUTPUT_PATH), 'test': test, 'reload': reload_res}
 
 
 def nginx_restart():

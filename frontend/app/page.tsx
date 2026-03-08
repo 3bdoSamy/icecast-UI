@@ -24,6 +24,7 @@ export default function Page() {
   const [streamMount, setStreamMount] = useState('/live')
   const [streamUser, setStreamUser] = useState('source')
   const [streamToken, setStreamToken] = useState('')
+  const [wsInterval, setWsInterval] = useState('2')
 
   useEffect(() => {
     fetch(`${apiBase}/api/config/schema`).then((r) => r.json()).then((s) => {
@@ -33,20 +34,14 @@ export default function Page() {
       setConfigValues(initial)
     }).catch(() => undefined)
   }, [])
-import { useEffect, useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { DashboardShell } from '@/components/DashboardShell'
-import { useStatsStore } from '@/store/useStatsStore'
-
-export default function Page() {
-  const { listeners, sources, bandwidth, setStats } = useStatsStore()
 
   useEffect(() => {
+    fetch(`${apiBase}/api/runtime/ws-interval`).then((r) => r.json()).then((j) => setWsInterval(String(j.ws_interval_seconds || 2))).catch(() => undefined)
+
     const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001'}/api/runtime/ws/stats`)
     ws.onmessage = (event) => {
       const parsed = JSON.parse(event.data)
       const icestats = parsed.raw?.icestats || parsed.icestats || {}
-      const icestats = parsed.icestats || {}
       setStats({
         listeners: Number(icestats.listeners || 0),
         sources: Number(icestats.source_total || icestats.sources || 0),
@@ -70,11 +65,6 @@ export default function Page() {
     const payload = await resp.json()
     setResult(JSON.stringify(payload, null, 2))
     setSyncInfo(payload.runtime_endpoints || null)
-    const resp = await fetch(`${apiBase}/api/nginx/settings`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain, https_enabled: httpsEnabled, cloudflare_enabled: cloudflare, ssl_mode: sslMode, icecast_port: 8000 })
-    })
-    setResult(JSON.stringify(await resp.json(), null, 2))
   }
 
   async function nginxAction(path: string) {
@@ -92,6 +82,17 @@ export default function Page() {
     setResult(JSON.stringify(await resp.json(), null, 2))
   }
 
+
+
+  async function saveWsInterval() {
+    const resp = await fetch(`${apiBase}/api/runtime/ws-interval`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seconds: Number(wsInterval) })
+    })
+    setResult(JSON.stringify(await resp.json(), null, 2))
+  }
+
   async function issueStreamToken() {
     const resp = await fetch(`${apiBase}/api/listener-auth/stream-token`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mount: streamMount, username: streamUser })
@@ -103,13 +104,15 @@ export default function Page() {
   return (
     <DashboardShell>
       <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold">Broadcast Dashboard</h2><span className="text-green-400">Server Online</span></div>
-      <div className="grid md:grid-cols-5 gap-4 mb-6">
+      <div className="grid md:grid-cols-5 gap-4 mb-3">
         <StatCard label="Listeners" value={listeners} />
         <StatCard label="Sources" value={sources} />
         <StatCard label="Bandwidth" value={bandwidth} />
         <StatCard label="CPU %" value={Number(analytics.cpu_usage || 0)} />
         <StatCard label="RAM %" value={Number(analytics.ram_usage || 0)} />
       </div>
+
+      <div className="flex items-center gap-2 mb-4"><label className="text-sm">Realtime interval</label><select className="bg-zinc-900 border border-zinc-700 rounded p-2" value={wsInterval} onChange={(e)=>setWsInterval(e.target.value)}><option>1</option><option>2</option><option>5</option><option>10</option><option>30</option></select><button className="bg-cyan-700 px-3 py-2 rounded" onClick={saveWsInterval}>Save WS Interval</button></div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div className="rounded-xl border border-zinc-800 p-4 h-72">
@@ -167,41 +170,10 @@ export default function Page() {
         <p>Status JSON: {syncInfo.status_json_endpoint_public}</p>
       </div> : null}
       {result ? <pre className="text-xs bg-zinc-950 p-2 rounded overflow-auto mt-6">{result}</pre> : null}
-      {result ? <pre className="text-xs bg-zinc-950 p-2 rounded overflow-auto mt-6">{result}</pre> : null}
-  const data = useMemo(() => [{ name: 'now', listeners, sources, bandwidth }], [listeners, sources, bandwidth])
-
-  return (
-    <DashboardShell>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Broadcast Dashboard</h2>
-        <span className="text-green-400">Server Online</span>
-      </div>
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total Listeners" value={listeners} />
-        <StatCard label="Total Sources" value={sources} />
-        <StatCard label="Bandwidth" value={bandwidth} />
-      </div>
-      <div className="rounded-xl border border-zinc-800 p-4 h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="listeners" stroke="#22c55e" />
-            <Line type="monotone" dataKey="sources" stroke="#3b82f6" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
     </DashboardShell>
   )
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return <div className="rounded-xl border border-zinc-800 p-4 bg-zinc-900/40"><p className="text-sm text-zinc-400">{label}</p><p className="text-3xl font-semibold">{Math.round(value)}</p></div>
-  return (
-    <div className="rounded-xl border border-zinc-800 p-4 bg-zinc-900/40">
-      <p className="text-sm text-zinc-400">{label}</p>
-      <p className="text-3xl font-semibold">{value}</p>
-    </div>
-  )
 }

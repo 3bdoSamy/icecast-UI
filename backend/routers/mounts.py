@@ -9,8 +9,6 @@ from services.admin_manager import update_metadata
 router = APIRouter()
 editor = IcecastXmlEditor()
 
-router = APIRouter()
-
 
 class KillSourceRequest(BaseModel):
     mount: str
@@ -42,7 +40,6 @@ class MountConfigRequest(BaseModel):
 
 
 @router.get('')
-@router.get("")
 async def mounts(_=Depends(get_current_user)):
     return await list_mounts()
 
@@ -100,6 +97,3 @@ async def metadata(mount: str, payload: MetadataRequest, _=Depends(get_current_u
     if not mount.startswith('/'):
         mount = '/' + mount
     return await update_metadata(mount, payload.song)
-@router.post("/kill-source")
-async def kill(payload: KillSourceRequest, _=Depends(get_current_user)):
-    return await kill_source(payload.mount)

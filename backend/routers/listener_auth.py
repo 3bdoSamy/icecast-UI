@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from services.security import get_current_user
 from services.listener_auth import add_or_update_user, delete_user, list_users, issue_stream_token, verify_stream_token
-from services.listener_auth import add_or_update_user, delete_user, list_users, issue_stream_token
 
 router = APIRouter()
 
