@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from lxml import etree
 
-ICECAST_XML = Path("/usr/local/etc/icecast.xml")
+ICECAST_XML = Path("/data/icecast/icecast.xml")
 
 
 class IcecastXmlEditor:

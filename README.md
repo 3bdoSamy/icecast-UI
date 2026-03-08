@@ -1,24 +1,17 @@
 # Icecast Control Center
 
-Icecast Control Center is a production-oriented web control panel for Icecast with:
-- FastAPI backend API + WebSockets
-- Next.js dashboard UI
-- Icecast-KH installed from source (`/usr/local/bin/icecast`)
-- Host nginx-extras reverse proxy with domain + SSL controls
+Production-ready control panel stack for managing Icecast from a web UI (FastAPI + Next.js + Docker).
 
-## Deployment
-On Ubuntu 22.04/24.04:
+## Run locally
 ```bash
-bash install.sh
+docker compose --env-file .env up -d --build
 ```
 
-The installer will:
-- Build/install Icecast-KH from source
-- Create `/usr/local/etc/icecast.xml`
-- Create and start `/etc/systemd/system/icecast.service`
-- Install/configure `nginx-extras`
-- Build/start dashboard containers
-
-## Operations
-- Update: `bash update.sh`
-- Uninstall: `bash uninstall.sh`
+## Key features included
+- JWT authentication with roles scaffold (Admin/Operator/Viewer)
+- XML config editing and xmllint validation
+- Icecast runtime controls (start/stop/restart)
+- Admin endpoint integrations (list mounts / kill source)
+- Realtime dashboard updates with WebSockets every 2 seconds
+- Log tail endpoints
+- Automated VPS install/update/uninstall scripts

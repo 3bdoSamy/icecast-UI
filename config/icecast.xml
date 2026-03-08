@@ -1,18 +1,13 @@
 <icecast>
-  <location>Icecast Control Center</location>
-  <admin>admin@example.com</admin>
-  <hostname>${SERVER_HOSTNAME}</hostname>
-
   <limits>
     <clients>100</clients>
-    <sources>10</sources>
+    <sources>5</sources>
     <queue-size>524288</queue-size>
     <client-timeout>30</client-timeout>
     <header-timeout>15</header-timeout>
     <source-timeout>10</source-timeout>
     <burst-size>65535</burst-size>
   </limits>
-
   <authentication>
     <source-password>${ICECAST_SOURCE_PASSWORD}</source-password>
     <relay-user>relay</relay-user>
@@ -20,18 +15,18 @@
     <admin-user>${ICECAST_ADMIN_USER}</admin-user>
     <admin-password>${ICECAST_ADMIN_PASSWORD}</admin-password>
   </authentication>
-
+  <hostname>${SERVER_HOSTNAME}</hostname>
+  <location>Default Studio</location>
+  <admin>admin@example.com</admin>
+  <paths>
+    <basedir>/usr/share/icecast2</basedir>
+    <logdir>/var/log/icecast2</logdir>
+    <webroot>/usr/share/icecast2/web</webroot>
+    <adminroot>/usr/share/icecast2/admin</adminroot>
+    <pidfile>/var/run/icecast2/icecast.pid</pidfile>
+  </paths>
   <listen-socket>
     <port>8000</port>
   </listen-socket>
-
-  <paths>
-    <basedir>/usr/local/share/icecast</basedir>
-    <logdir>/var/log/icecast</logdir>
-    <webroot>/usr/local/share/icecast/web</webroot>
-    <adminroot>/usr/local/share/icecast/admin</adminroot>
-    <pidfile>/var/run/icecast.pid</pidfile>
-  </paths>
-
   <fileserve>1</fileserve>
 </icecast>

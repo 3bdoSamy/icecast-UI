@@ -24,17 +24,6 @@ def restart(_=Depends(get_current_user)):
     return icecast_controller.restart_icecast()
 
 
-
-
-@router.post("/reload")
-def reload(_=Depends(get_current_user)):
-    return icecast_controller.reload_icecast()
-
-
-@router.get("/status")
-def status(_=Depends(get_current_user)):
-    return icecast_controller.icecast_status()
-
 @router.websocket("/ws/stats")
 async def stats_ws(websocket: WebSocket):
     await websocket.accept()
