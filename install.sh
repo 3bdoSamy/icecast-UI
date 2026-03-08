@@ -79,6 +79,8 @@ install_icecast_kh() {
 
   echo "Installing Icecast-KH build dependencies for $PLATFORM..."
   for pkg in build-essential libxml2-dev libxslt1-dev libssl-dev libcurl4-openssl-dev libvorbis-dev libtheora-dev libspeex-dev libogg-dev autoconf automake libtool pkg-config git; do
+  echo "Installing Icecast-KH build dependencies..."
+  for pkg in build-essential libxml2-dev libxslt1-dev libssl-dev libcurl4-openssl-dev libvorbis-dev libtheora-dev libspeex-dev libogg-dev pkg-config git autoconf automake libtool; do
     install_pkg "$pkg"
   done
 
@@ -174,6 +176,9 @@ CONF
   else
     echo "[WARN] nginx -t failed. Continuing installation. Review nginx config manually."
   fi
+  nginx -t
+  systemctl enable nginx --now
+  systemctl reload nginx
 }
 
 setup_control_stack() {
@@ -199,6 +204,7 @@ ENV
   fi
 
   run_compose "--env-file '$PROJECT_DIR/.env' -f '$PROJECT_DIR/docker-compose.yml' up -d --build"
+  docker compose --env-file "$PROJECT_DIR/.env" -f "$PROJECT_DIR/docker-compose.yml" up -d --build
 
   cat > "$CONTROL_SERVICE" <<SERVICE
 [Unit]
@@ -212,6 +218,8 @@ WorkingDirectory=$PROJECT_DIR
 RemainAfterExit=true
 ExecStart=$COMPOSE_EXEC --env-file .env up -d
 ExecStop=$COMPOSE_EXEC --env-file .env down
+ExecStart=/usr/bin/docker compose --env-file .env up -d
+ExecStop=/usr/bin/docker compose --env-file .env down
 TimeoutStartSec=0
 
 [Install]
@@ -223,6 +231,7 @@ SERVICE
 }
 
 echo "Updating apt cache for architecture: $ARCH ($PLATFORM)"
+echo "Updating apt cache..."
 apt update
 apt upgrade -y
 check_resources
@@ -232,12 +241,16 @@ for pkg in curl nodejs npm python3 python3-pip git libxml2-utils; do
 done
 
 ensure_docker
+for pkg in curl docker.io docker-compose-plugin nodejs npm python3 python3-pip git libxml2-utils; do
+  install_pkg "$pkg"
+done
 systemctl enable docker --now
 
 read -rp "Dashboard admin username: " ADMIN_USERNAME
 read -rsp "Dashboard admin password: " ADMIN_PASSWORD; echo
 read -rp "Primary domain/hostname (optional, press Enter to skip): " SERVER_HOSTNAME
 SERVER_HOSTNAME=${SERVER_HOSTNAME:-_}
+read -rp "Primary domain/hostname (example radio.example.com): " SERVER_HOSTNAME
 read -rp "Icecast source password: " ICECAST_SOURCE_PASSWORD
 read -rp "Icecast admin password: " ICECAST_ADMIN_PASSWORD
 JWT_SECRET=$(openssl rand -hex 32)
