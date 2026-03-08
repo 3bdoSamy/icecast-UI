@@ -6,6 +6,12 @@ from lxml import etree
 
 ICECAST_XML = Path('/usr/local/etc/icecast.xml')
 BACKUP_DIR = Path('/etc/icecast/backups')
+BACKUP_DIR = Path('/usr/local/etc/icecast-backups')
+import subprocess
+from pathlib import Path
+from lxml import etree
+
+ICECAST_XML = Path("/data/icecast/icecast.xml")
 
 
 class IcecastXmlEditor:
@@ -51,6 +57,7 @@ class IcecastXmlEditor:
     def set_values(self, updates: list[tuple[str, str]]):
         for xpath, value in updates:
             self.set_value(xpath, value)
+        tree.write(str(self.xml_path), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
     def upsert_mount(self, mount_name: str, values: dict):
         tree = self.load_tree()
@@ -60,11 +67,14 @@ class IcecastXmlEditor:
         for m in mounts.findall('mount'):
             key = m.get('mount-name') or (m.findtext('mount-name') or '')
             if key == mount_name:
+            if m.get('type') == 'normal' and m.get('mount-name') == mount_name:
                 mount_node = m
                 break
         if mount_node is None:
             mount_node = etree.SubElement(mounts, 'mount')
             etree.SubElement(mount_node, 'mount-name').text = mount_name
+            mount_node.set('type', 'normal')
+            mount_node.set('mount-name', mount_name)
 
         for k, v in values.items():
             if v is None:
@@ -75,6 +85,7 @@ class IcecastXmlEditor:
             c.text = str(v)
 
         self._write_tree(tree)
+        tree.write(str(self.xml_path), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
     def delete_mount(self, mount_name: str):
         tree = self.load_tree()
@@ -202,6 +213,9 @@ class IcecastXmlEditor:
         relays = relays_node.findall('relay')
         relays_node.remove(relays[relay_id])
         self._write_tree(tree)
+            if m.get('mount-name') == mount_name:
+                mounts.remove(m)
+        tree.write(str(self.xml_path), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
     def validate(self):
         proc = subprocess.run(['xmllint', '--noout', str(self.xml_path)], capture_output=True, text=True)
@@ -211,3 +225,19 @@ class IcecastXmlEditor:
         backup = self.backup()
         valid = self.validate()
         return {'backup': backup, **valid}
+        return self.xml_path.read_text(encoding="utf-8")
+
+    def write_xml(self, xml_content: str):
+        self.xml_path.write_text(xml_content, encoding="utf-8")
+
+    def update_value(self, xpath: str, value: str):
+        tree = self.load_tree()
+        node = tree.xpath(xpath)
+        if not node:
+            raise ValueError(f"XPath not found: {xpath}")
+        node[0].text = value
+        tree.write(str(self.xml_path), pretty_print=True, encoding="utf-8", xml_declaration=True)
+
+    def validate(self):
+        proc = subprocess.run(["xmllint", "--noout", str(self.xml_path)], capture_output=True, text=True)
+        return {"valid": proc.returncode == 0, "output": proc.stderr or "XML is valid"}
