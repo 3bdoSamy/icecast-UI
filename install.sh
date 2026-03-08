@@ -12,6 +12,17 @@ NGINX_CONF="/etc/nginx/conf.d/icecast.conf"
 
 ARCH="$(uname -m)"
 case "$ARCH" in
+  x86_64|amd64) PLATFORM="amd64" ;;
+  aarch64|arm64) PLATFORM="arm64" ;;
+  *) PLATFORM="unknown"; echo "[WARN] Unrecognized architecture: $ARCH. Continuing." ;;
+esac
+
+if command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE="docker-compose"
+  COMPOSE_EXEC="/usr/bin/docker-compose"
+else
+  COMPOSE="docker compose"
+  COMPOSE_EXEC="/usr/bin/docker compose"
   x86_64|amd64)
     PLATFORM="amd64"
     ;;
@@ -41,6 +52,12 @@ check_resources() {
   mem_mb=$(free -m | awk '/^Mem:/{print $2}')
   disk_mb=$(df -Pm / | awk 'NR==2{print $4}')
   if [ "$mem_mb" -lt 900 ]; then
+    echo "[ERROR] Low memory detected (<900MB). Minimum recommended: 1GB RAM."
+    exit 1
+  fi
+  if [ "$disk_mb" -lt 4096 ]; then
+    echo "[ERROR] Low disk space detected (<4GB free)."
+    exit 1
     echo "[ERROR] Low memory detected (<900MB). Minimum recommended: 1GB RAM."; exit 1
   fi
   if [ "$disk_mb" -lt 4096 ]; then
@@ -78,6 +95,24 @@ install_icecast_kh() {
   fi
 
   echo "Installing Icecast-KH build dependencies for $PLATFORM..."
+  local deps=(
+    build-essential
+    libxml2-dev
+    libxslt1-dev
+    libssl-dev
+    libcurl4-openssl-dev
+    libvorbis-dev
+    libtheora-dev
+    libspeex-dev
+    libogg-dev
+    autoconf
+    automake
+    libtool
+    pkg-config
+    git
+  )
+  local pkg
+  for pkg in "${deps[@]}"; do
   for pkg in     build-essential     libxml2-dev     libxslt1-dev     libssl-dev     libcurl4-openssl-dev     libvorbis-dev     libtheora-dev     libspeex-dev     libogg-dev     autoconf     automake     libtool     pkg-config     git
   do
   for pkg in build-essential libxml2-dev libxslt1-dev libssl-dev libcurl4-openssl-dev libvorbis-dev libtheora-dev libspeex-dev libogg-dev autoconf automake libtool pkg-config git; do
@@ -89,11 +124,13 @@ install_icecast_kh() {
   rm -rf "$ICECAST_SRC_DIR"
   git clone https://github.com/karlheyes/icecast-kh.git "$ICECAST_SRC_DIR"
   cd "$ICECAST_SRC_DIR"
+
   libtoolize --force
   aclocal
   autoheader
   autoconf
   automake --add-missing
+
   ./autogen.sh
   ./configure
   make -j"$(nproc)"
@@ -202,6 +239,11 @@ ENV
   mkdir -p "$PROJECT_DIR/data/control" "$PROJECT_DIR/data/icecast/logs"
 
   if ss -ltn '( sport = :3000 or sport = :8001 )' | grep -q LISTEN; then
+    echo "[ERROR] Port conflict detected on 3000/8001."
+    exit 1
+  fi
+
+  run_compose "--env-file '$PROJECT_DIR/.env' -f '$PROJECT_DIR/docker-compose.yml' up -d --build"
     echo "[ERROR] Port conflict detected on 3000/8001."; exit 1
   fi
 
@@ -243,6 +285,13 @@ for pkg in curl nodejs npm python3 python3-pip git libxml2-utils; do
 done
 
 ensure_docker
+systemctl enable docker --now
+
+read -rp "Dashboard admin username: " ADMIN_USERNAME
+read -rsp "Dashboard admin password: " ADMIN_PASSWORD
+echo
+read -rp "Primary domain/hostname (optional, press Enter to skip): " SERVER_HOSTNAME
+SERVER_HOSTNAME=${SERVER_HOSTNAME:-_}
 for pkg in curl docker.io docker-compose-plugin nodejs npm python3 python3-pip git libxml2-utils; do
   install_pkg "$pkg"
 done
@@ -269,6 +318,8 @@ setup_nginx
 setup_control_stack
 
 SERVER_IP=$(hostname -I | awk '{print $1}')
+echo
+echo "Installation complete"
 echo "\nInstallation complete"
 echo "Dashboard URL: http://$SERVER_IP:3000"
 echo "Icecast URL (via nginx): http://$SERVER_HOSTNAME"
