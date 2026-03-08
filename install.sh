@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
 set -euo pipefail
 
 PROJECT_DIR="/opt/icecast-control-center"
@@ -97,6 +98,7 @@ install_icecast_kh() {
   make install
 }
 
+# Keep function declaration plain bash to avoid parser issues on strict environments
 setup_icecast_service() {
   id -u icecast >/dev/null 2>&1 || useradd --system --home /var/lib/icecast --shell /usr/sbin/nologin icecast
   mkdir -p /var/log/icecast /var/lib/icecast /usr/local/etc /etc/icecast/backups
