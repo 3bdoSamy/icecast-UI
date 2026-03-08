@@ -11,6 +11,14 @@ CONTROL_SERVICE="/etc/systemd/system/icecast-control-center.service"
 NGINX_CONF="/etc/nginx/conf.d/icecast.conf"
 
 ARCH="$(uname -m)"
+if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
+  PLATFORM="amd64"
+elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+  PLATFORM="arm64"
+else
+  PLATFORM="unknown"
+  echo "[WARN] Unrecognized architecture: $ARCH. Continuing."
+fi
 case "$ARCH" in
   x86_64|amd64) PLATFORM="amd64" ;;
   aarch64|arm64) PLATFORM="arm64" ;;
