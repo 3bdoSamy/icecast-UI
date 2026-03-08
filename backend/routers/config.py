@@ -33,6 +33,7 @@ SECTION_SCHEMA: Dict[str, List[str]] = {
     'paths': [
         'paths/basedir', 'paths/logdir', 'paths/pidfile', 'paths/webroot', 'paths/adminroot',
         'paths/alias/source', 'paths/alias/destination', 'paths/ssl-certificate', 'paths/ssl-allowed-ciphers', 'paths/allow-ip', 'paths/deny-ip'
+        'paths/alias/source', 'paths/alias/destination', 'paths/ssl-certificate'
     ],
     'logging': ['logging/accesslog', 'logging/errorlog', 'logging/playlistlog', 'logging/loglevel', 'logging/logsize', 'logging/logarchive'],
     'security': ['security/chroot', 'security/changeowner/user', 'security/changeowner/group'],
@@ -72,6 +73,16 @@ def update_xml(payload: XmlUpdateRequest, _=Depends(get_current_user)):
         if not valid['valid']:
             raise HTTPException(status_code=400, detail={'message': 'XML validation failed', 'validation': valid, 'backup': backup})
         return {'status': 'updated', 'backup': backup, 'validation': valid}
+@router.get("/raw")
+def get_raw_config(_=Depends(get_current_user)):
+    return {"xml": editor.read_xml()}
+
+
+@router.post("/update")
+def update_xml(payload: XmlUpdateRequest, _=Depends(get_current_user)):
+    try:
+        editor.update_value(payload.xpath, payload.value)
+        return {"status": "updated"}
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -133,3 +144,6 @@ def update_limits(payload: LimitsRequest, _=Depends(get_current_user)):
     if not valid['valid']:
         raise HTTPException(status_code=400, detail={'message': 'XML validation failed', 'validation': valid, 'backup': backup})
     return {'status': 'updated', 'backup': backup, 'validation': valid}
+@router.post("/validate")
+def validate_xml(_=Depends(get_current_user)):
+    return editor.validate()

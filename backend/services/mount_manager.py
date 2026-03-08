@@ -2,6 +2,7 @@ import os
 import httpx
 
 ICECAST_ADMIN_URL = os.getenv("ICECAST_ADMIN_URL", "http://127.0.0.1:8000")
+ICECAST_ADMIN_URL = os.getenv("ICECAST_ADMIN_URL", "http://icecast:8000")
 ICECAST_ADMIN_USER = os.getenv("ICECAST_ADMIN_USER", "admin")
 ICECAST_ADMIN_PASSWORD = os.getenv("ICECAST_ADMIN_PASSWORD", "hackme")
 

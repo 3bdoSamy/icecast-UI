@@ -4,6 +4,7 @@ import time
 from collections import defaultdict, deque
 import httpx
 import psutil
+import httpx
 from fastapi import APIRouter, Depends, WebSocket
 from services.security import get_current_user
 from services import icecast_controller
@@ -76,16 +77,22 @@ async def _collect_stats():
 
 
 @router.post('/start')
+ICECAST_STATS_URL = os.getenv("ICECAST_STATS_URL", "http://icecast:8000/status-json.xsl")
+
+
+@router.post("/start")
 def start(_=Depends(get_current_user)):
     return icecast_controller.start_icecast()
 
 
 @router.post('/stop')
+@router.post("/stop")
 def stop(_=Depends(get_current_user)):
     return icecast_controller.stop_icecast()
 
 
 @router.post('/restart')
+@router.post("/restart")
 def restart(_=Depends(get_current_user)):
     return icecast_controller.restart_icecast()
 
@@ -127,3 +134,15 @@ def peak_listeners(_=Depends(get_current_user)):
 @router.get('/bandwidth-usage')
 def bandwidth_usage(_=Depends(get_current_user)):
     return {'bandwidth': [x.get('bandwidth', 0) for x in global_history], 'network_bps': [x.get('net_bps', 0) for x in global_history]}
+@router.websocket("/ws/stats")
+async def stats_ws(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        async with httpx.AsyncClient(timeout=5) as client:
+            try:
+                response = await client.get(ICECAST_STATS_URL)
+                payload = response.json()
+            except Exception:
+                payload = {"icestats": {"listeners": 0, "sources": 0}}
+        await websocket.send_json(payload)
+        await asyncio.sleep(2)
