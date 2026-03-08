@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from services.security import get_current_user
 from services.mount_manager import list_mounts, kill_source
 from services.xml_editor import IcecastXmlEditor
+from services.admin_manager import update_metadata
 
 router = APIRouter()
 editor = IcecastXmlEditor()
@@ -88,6 +89,17 @@ def delete_mount(mount_name: str, _=Depends(get_current_user)):
     editor.delete_mount(mount_name)
     valid = editor.validate()
     return {'status': 'deleted', 'backup': backup, 'validation': valid}
+
+
+class MetadataRequest(BaseModel):
+    song: str
+
+
+@router.post('/{mount:path}/metadata')
+async def metadata(mount: str, payload: MetadataRequest, _=Depends(get_current_user)):
+    if not mount.startswith('/'):
+        mount = '/' + mount
+    return await update_metadata(mount, payload.song)
 @router.post("/kill-source")
 async def kill(payload: KillSourceRequest, _=Depends(get_current_user)):
     return await kill_source(payload.mount)

@@ -33,3 +33,12 @@ def list_users():
 
 def issue_stream_token(mount: str, username: str):
     return jwt.encode({'mount': mount, 'sub': username}, SECRET, algorithm='HS256')
+
+
+
+def verify_stream_token(token: str, mount: str):
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=['HS256'])
+        return payload.get('mount') == mount
+    except Exception:
+        return False

@@ -55,6 +55,8 @@ install_icecast_kh() {
 
 setup_icecast_service() {
   id -u icecast >/dev/null 2>&1 || useradd --system --home /var/lib/icecast --shell /usr/sbin/nologin icecast
+  mkdir -p /var/log/icecast /var/lib/icecast /usr/local/etc /etc/icecast/backups
+  chown -R icecast:icecast /var/log/icecast /var/lib/icecast /etc/icecast/backups
   mkdir -p /var/log/icecast /var/lib/icecast /usr/local/etc
   chown -R icecast:icecast /var/log/icecast /var/lib/icecast
 

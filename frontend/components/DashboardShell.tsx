@@ -3,6 +3,17 @@
 import Link from 'next/link'
 import { ReactNode } from 'react'
 
+const pages = [
+  { label: 'Dashboard', href: '/' },
+  { label: 'Sockets', href: '/sockets' },
+  { label: 'Relays', href: '/relays' },
+  { label: 'Listeners', href: '/listeners' },
+  { label: 'Mount editor', href: '/mount-editor' },
+  { label: 'Limits', href: '/limits' },
+  { label: 'Paths', href: '/paths' },
+  { label: 'Logging', href: '/logging' },
+  { label: 'Security', href: '/security' }
+]
 const pages = ['Dashboard', 'Mountpoints', 'Listeners', 'Sources', 'Relays', 'Configuration', 'Logs', 'Security', 'Authentication', 'Statistics']
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -12,6 +23,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <h1 className="text-lg font-semibold mb-6">Icecast Control Center</h1>
         <nav className="space-y-2">
           {pages.map((page) => (
+            <Link key={page.label} href={page.href} className="block text-sm text-zinc-300 hover:text-white">
+              {page.label}
             <Link key={page} href="#" className="block text-sm text-zinc-300 hover:text-white">
               {page}
             </Link>

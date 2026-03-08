@@ -62,6 +62,7 @@
   <master-server-port>8000</master-server-port>
   <master-update-interval>120</master-update-interval>
   <master-password>${ICECAST_RELAY_PASSWORD}</master-password>
+  <relays-on-demand>1</relays-on-demand>
 
   <relays>
     <relay>
@@ -93,6 +94,9 @@
     <pidfile>/var/run/icecast.pid</pidfile>
     <alias source="/status" destination="/status.xsl" />
     <ssl-certificate>/etc/ssl/certs/cloudflare-origin.pem</ssl-certificate>
+    <ssl-allowed-ciphers>HIGH:!aNULL:!MD5</ssl-allowed-ciphers>
+    <allow-ip>/etc/icecast/allowlist.txt</allow-ip>
+    <deny-ip>/etc/icecast/denylist.txt</deny-ip>
   </paths>
 
   <logging>

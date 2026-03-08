@@ -117,6 +117,23 @@ async def stats_ws(websocket: WebSocket):
     await websocket.accept()
     while True:
         payload = await _collect_stats()
+        await websocket.send_json(payload)
+        await asyncio.sleep(2)
+
+
+@router.get('/listeners-history')
+def listeners_history(_=Depends(get_current_user)):
+    return {'history': list(global_history)}
+
+
+@router.get('/peak-listeners')
+def peak_listeners(_=Depends(get_current_user)):
+    return {'peak': max((x['listeners'] for x in global_history), default=0)}
+
+
+@router.get('/bandwidth-usage')
+def bandwidth_usage(_=Depends(get_current_user)):
+    return {'bandwidth': [x.get('bandwidth', 0) for x in global_history], 'network_bps': [x.get('net_bps', 0) for x in global_history]}
 @router.websocket("/ws/stats")
 async def stats_ws(websocket: WebSocket):
     await websocket.accept()
