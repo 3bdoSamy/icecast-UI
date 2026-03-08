@@ -78,6 +78,8 @@ install_icecast_kh() {
   fi
 
   echo "Installing Icecast-KH build dependencies for $PLATFORM..."
+  for pkg in     build-essential     libxml2-dev     libxslt1-dev     libssl-dev     libcurl4-openssl-dev     libvorbis-dev     libtheora-dev     libspeex-dev     libogg-dev     autoconf     automake     libtool     pkg-config     git
+  do
   for pkg in build-essential libxml2-dev libxslt1-dev libssl-dev libcurl4-openssl-dev libvorbis-dev libtheora-dev libspeex-dev libogg-dev autoconf automake libtool pkg-config git; do
   echo "Installing Icecast-KH build dependencies..."
   for pkg in build-essential libxml2-dev libxslt1-dev libssl-dev libcurl4-openssl-dev libvorbis-dev libtheora-dev libspeex-dev libogg-dev pkg-config git autoconf automake libtool; do
