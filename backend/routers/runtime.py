@@ -1,0 +1,148 @@
+import asyncio
+import os
+import time
+from collections import defaultdict, deque
+import httpx
+import psutil
+from fastapi import APIRouter, Depends, WebSocket
+from pydantic import BaseModel
+from services.security import get_current_user
+from services import icecast_controller
+from services.sync_manager import runtime_endpoints
+from services.settings_manager import get_settings, set_ws_interval
+
+router = APIRouter()
+ICECAST_STATS_URL = os.getenv('ICECAST_STATS_URL', '')
+
+listener_history = defaultdict(lambda: deque(maxlen=3600))
+global_history = deque(maxlen=3600)
+_last_net = {'time': None, 'bytes': None}
+
+
+def _network_bps() -> float:
+    now = time.time()
+    counters = psutil.net_io_counters()
+    total = counters.bytes_sent + counters.bytes_recv
+    if _last_net['time'] is None:
+        _last_net['time'] = now
+        _last_net['bytes'] = total
+        return 0.0
+    dt = max(now - _last_net['time'], 1e-6)
+    db = max(total - (_last_net['bytes'] or 0), 0)
+    _last_net['time'] = now
+    _last_net['bytes'] = total
+    return db / dt
+
+
+async def _collect_stats():
+    async with httpx.AsyncClient(timeout=5) as client:
+        try:
+            stats_url = ICECAST_STATS_URL or runtime_endpoints()['status_json_endpoint_local']
+            response = await client.get(stats_url)
+            payload = response.json()
+        except Exception:
+            payload = {'icestats': {'listeners': 0, 'source': []}}
+
+    icestats = payload.get('icestats', {})
+    sources = icestats.get('source', [])
+    if isinstance(sources, dict):
+        sources = [sources]
+
+    ts = int(time.time())
+    total_listeners = int(icestats.get('listeners', 0) or 0)
+    total_bandwidth = float(icestats.get('bandwidth', 0) or 0)
+    cpu = psutil.cpu_percent(interval=None)
+    mem = psutil.virtual_memory().percent
+    bps = _network_bps()
+
+    per_mount = []
+    for src in sources:
+        mount = src.get('listenurl', src.get('server_name', 'unknown'))
+        listeners = int(src.get('listeners', 0) or 0)
+        listener_history[mount].append({'ts': ts, 'listeners': listeners})
+        per_mount.append({'mount': mount, 'listeners': listeners, 'bitrate': src.get('bitrate', 0)})
+
+    global_history.append({'ts': ts, 'listeners': total_listeners, 'bandwidth': total_bandwidth, 'cpu': cpu, 'ram': mem, 'net_bps': bps})
+    top_mounts = sorted(per_mount, key=lambda m: m['listeners'], reverse=True)[:10]
+
+    return {
+        'raw': payload,
+        'analytics': {
+            'cpu_usage': cpu,
+            'ram_usage': mem,
+            'network_bandwidth_bps': bps,
+            'listener_peaks': max((x['listeners'] for x in global_history), default=0),
+            'historical_listeners': list(global_history),
+            'top_mounts': top_mounts,
+            'listener_history_per_mount': {k: list(v) for k, v in listener_history.items()},
+        },
+    }
+
+
+@router.post('/start')
+def start(_=Depends(get_current_user)):
+    return icecast_controller.start_icecast()
+
+
+@router.post('/stop')
+def stop(_=Depends(get_current_user)):
+    return icecast_controller.stop_icecast()
+
+
+@router.post('/restart')
+def restart(_=Depends(get_current_user)):
+    return icecast_controller.restart_icecast()
+
+
+@router.post('/reload')
+def reload(_=Depends(get_current_user)):
+    return icecast_controller.reload_icecast()
+
+
+@router.get('/status')
+def status(_=Depends(get_current_user)):
+    return icecast_controller.icecast_status()
+
+
+@router.get('/analytics')
+async def analytics(_=Depends(get_current_user)):
+    return await _collect_stats()
+
+
+@router.websocket('/ws/stats')
+async def stats_ws(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        payload = await _collect_stats()
+        await websocket.send_json(payload)
+        await asyncio.sleep(get_settings().get('ws_interval_seconds', 2))
+
+
+@router.get('/listeners-history')
+def listeners_history(_=Depends(get_current_user)):
+    return {'history': list(global_history)}
+
+
+@router.get('/peak-listeners')
+def peak_listeners(_=Depends(get_current_user)):
+    return {'peak': max((x['listeners'] for x in global_history), default=0)}
+
+
+@router.get('/bandwidth-usage')
+def bandwidth_usage(_=Depends(get_current_user)):
+    return {'bandwidth': [x.get('bandwidth', 0) for x in global_history], 'network_bps': [x.get('net_bps', 0) for x in global_history]}
+
+
+class WsIntervalRequest(BaseModel):
+    seconds: int
+
+
+@router.get('/ws-interval')
+def ws_interval(_=Depends(get_current_user)):
+    return {'ws_interval_seconds': get_settings().get('ws_interval_seconds', 2)}
+
+
+@router.put('/ws-interval')
+def update_ws_interval(payload: WsIntervalRequest, _=Depends(get_current_user)):
+    settings = set_ws_interval(payload.seconds)
+    return {'status': 'updated', 'ws_interval_seconds': settings['ws_interval_seconds']}
