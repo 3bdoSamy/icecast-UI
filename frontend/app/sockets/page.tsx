@@ -9,6 +9,8 @@ export default function SocketsPage() {
   const [port, setPort] = useState('8000')
   const [bindAddress, setBindAddress] = useState('0.0.0.0')
   const [ssl, setSsl] = useState('0')
+  const [domain, setDomain] = useState('localhost')
+  const [result, setResult] = useState('')
 
   async function load() {
     const r = await fetch(`${api}/api/sockets`)
@@ -24,5 +26,16 @@ export default function SocketsPage() {
 
   async function del(id: number) { await fetch(`${api}/api/sockets/${id}`, { method: 'DELETE' }); load() }
 
+  async function syncPrimary() {
+    const r = await fetch(`${api}/api/sync/services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, icecast_port: Number(port), https_enabled: false, ssl_mode: 'none', cloudflare_enabled: false })
+    })
+    setResult(JSON.stringify(await r.json(), null, 2))
+    load()
+  }
+
+  return <DashboardShell><h2 className="text-xl mb-4">Listen Socket Management</h2><div className="flex gap-2 mb-4"><input className="bg-zinc-900 p-2 rounded" value={domain} onChange={(e)=>setDomain(e.target.value)}/><input value={port} onChange={(e)=>setPort(e.target.value)} className="bg-zinc-900 p-2 rounded"/><input value={bindAddress} onChange={(e)=>setBindAddress(e.target.value)} className="bg-zinc-900 p-2 rounded"/><select value={ssl} onChange={(e)=>setSsl(e.target.value)} className="bg-zinc-900 p-2 rounded"><option value="0">ssl 0</option><option value="1">ssl 1</option></select><button onClick={add} className="bg-blue-600 px-3 rounded">Add</button><button onClick={syncPrimary} className="bg-emerald-600 px-3 rounded">Sync services()</button></div><ul className="space-y-2">{sockets.map((s)=> <li key={s.id} className="border border-zinc-800 p-2 rounded flex justify-between"><span>#{s.id} {s.port} {s['bind-address']} ssl={s.ssl}</span><button onClick={()=>del(s.id)} className="text-red-400">Delete</button></li>)}</ul>{result ? <pre className="text-xs mt-4">{result}</pre> : null}</DashboardShell>
   return <DashboardShell><h2 className="text-xl mb-4">Listen Socket Management</h2><div className="flex gap-2 mb-4"><input value={port} onChange={(e)=>setPort(e.target.value)} className="bg-zinc-900 p-2 rounded"/><input value={bindAddress} onChange={(e)=>setBindAddress(e.target.value)} className="bg-zinc-900 p-2 rounded"/><select value={ssl} onChange={(e)=>setSsl(e.target.value)} className="bg-zinc-900 p-2 rounded"><option value="0">ssl 0</option><option value="1">ssl 1</option></select><button onClick={add} className="bg-blue-600 px-3 rounded">Add</button></div><ul className="space-y-2">{sockets.map((s)=> <li key={s.id} className="border border-zinc-800 p-2 rounded flex justify-between"><span>#{s.id} {s.port} {s['bind-address']} ssl={s.ssl}</span><button onClick={()=>del(s.id)} className="text-red-400">Delete</button></li>)}</ul></DashboardShell>
 }

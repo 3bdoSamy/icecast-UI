@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import auth, config, mounts, runtime, logs, nginx_control, listener_auth, sockets, relays, listeners, sync
 from routers import auth, config, mounts, runtime, logs, nginx_control, listener_auth, sockets, relays, listeners
 from routers import auth, config, mounts, runtime, logs, nginx_control, listener_auth
 from routers import auth, config, mounts, runtime, logs
@@ -29,3 +30,4 @@ app.include_router(listener_auth.router, prefix="/api/listener-auth", tags=["lis
 app.include_router(sockets.router, prefix="/api/sockets", tags=["sockets"])
 app.include_router(relays.router, prefix="/api/relays", tags=["relays"])
 app.include_router(listeners.router, prefix="/api/listeners", tags=["listeners"])
+app.include_router(sync.router, prefix="/api/sync", tags=["sync"])

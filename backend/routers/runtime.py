@@ -4,6 +4,13 @@ import time
 from collections import defaultdict, deque
 import httpx
 import psutil
+from fastapi import APIRouter, Depends, WebSocket
+from services.security import get_current_user
+from services import icecast_controller
+from services.sync_manager import runtime_endpoints
+
+router = APIRouter()
+ICECAST_STATS_URL = os.getenv('ICECAST_STATS_URL', '')
 import httpx
 from fastapi import APIRouter, Depends, WebSocket
 from services.security import get_current_user
@@ -35,6 +42,8 @@ def _network_bps() -> float:
 async def _collect_stats():
     async with httpx.AsyncClient(timeout=5) as client:
         try:
+            stats_url = ICECAST_STATS_URL or runtime_endpoints()['status_json_endpoint_local']
+            response = await client.get(stats_url)
             response = await client.get(ICECAST_STATS_URL)
             payload = response.json()
         except Exception:

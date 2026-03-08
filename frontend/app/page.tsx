@@ -15,6 +15,8 @@ export default function Page() {
   const [httpsEnabled, setHttpsEnabled] = useState(false)
   const [cloudflare, setCloudflare] = useState(false)
   const [sslMode, setSslMode] = useState('none')
+  const [icecastPort, setIcecastPort] = useState('8000')
+  const [syncInfo, setSyncInfo] = useState<any>(null)
   const [result, setResult] = useState('')
   const [schema, setSchema] = useState<Schema>({})
   const [configValues, setConfigValues] = useState<Record<string, string>>({})
@@ -61,6 +63,13 @@ export default function Page() {
 
   async function saveNginxSettings(e: FormEvent) {
     e.preventDefault()
+    const resp = await fetch(`${apiBase}/api/sync/services`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, https_enabled: httpsEnabled, cloudflare_enabled: cloudflare, ssl_mode: sslMode, icecast_port: Number(icecastPort) })
+    })
+    const payload = await resp.json()
+    setResult(JSON.stringify(payload, null, 2))
+    setSyncInfo(payload.runtime_endpoints || null)
     const resp = await fetch(`${apiBase}/api/nginx/settings`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ domain, https_enabled: httpsEnabled, cloudflare_enabled: cloudflare, ssl_mode: sslMode, icecast_port: 8000 })
@@ -115,6 +124,7 @@ export default function Page() {
       <form onSubmit={saveNginxSettings} className="rounded-xl border border-zinc-800 p-4 space-y-3 mb-6">
         <h3 className="font-semibold">Nginx / Domain / SSL</h3>
         <input className="w-full bg-zinc-900 border border-zinc-700 rounded p-2" placeholder="radio.example.com" value={domain} onChange={(e) => setDomain(e.target.value)} />
+        <input className="w-full bg-zinc-900 border border-zinc-700 rounded p-2" placeholder="Icecast port" value={icecastPort} onChange={(e) => setIcecastPort(e.target.value)} />
         <div className="flex gap-4 text-sm">
           <label><input type="checkbox" checked={httpsEnabled} onChange={(e) => setHttpsEnabled(e.target.checked)} /> HTTPS</label>
           <label><input type="checkbox" checked={cloudflare} onChange={(e) => setCloudflare(e.target.checked)} /> Cloudflare</label>
@@ -151,6 +161,12 @@ export default function Page() {
         {streamToken ? <pre className="text-xs bg-zinc-950 p-2 rounded overflow-auto">{streamToken}</pre> : null}
       </div>
 
+      {syncInfo ? <div className="mt-4 text-xs text-zinc-300">
+        <p>Frontend API Base: {syncInfo.frontend_api_base_url}</p>
+        <p>Stream Base URL: {syncInfo.stream_base_url}</p>
+        <p>Status JSON: {syncInfo.status_json_endpoint_public}</p>
+      </div> : null}
+      {result ? <pre className="text-xs bg-zinc-950 p-2 rounded overflow-auto mt-6">{result}</pre> : null}
       {result ? <pre className="text-xs bg-zinc-950 p-2 rounded overflow-auto mt-6">{result}</pre> : null}
   const data = useMemo(() => [{ name: 'now', listeners, sources, bandwidth }], [listeners, sources, bandwidth])
 
