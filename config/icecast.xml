@@ -1,0 +1,112 @@
+<icecast>
+  <location>Icecast Control Center</location>
+  <admin>admin@example.com</admin>
+  <hostname>${SERVER_HOSTNAME}</hostname>
+  <charset>UTF-8</charset>
+  <mount-default>audio/mpeg</mount-default>
+
+  <limits>
+    <clients>100</clients>
+    <sources>10</sources>
+    <queue-size>524288</queue-size>
+    <client-timeout>30</client-timeout>
+    <header-timeout>15</header-timeout>
+    <source-timeout>10</source-timeout>
+    <burst-size>65535</burst-size>
+    <burst-on-connect>1</burst-on-connect>
+  </limits>
+
+  <authentication>
+    <source-password>${ICECAST_SOURCE_PASSWORD}</source-password>
+    <relay-user>relay</relay-user>
+    <relay-password>${ICECAST_RELAY_PASSWORD}</relay-password>
+    <admin-user>${ICECAST_ADMIN_USER}</admin-user>
+    <admin-password>${ICECAST_ADMIN_PASSWORD}</admin-password>
+    <listener_auth>
+      <type>htpasswd</type>
+      <mount_add>http://127.0.0.1:9000/mount_add</mount_add>
+      <mount_remove>http://127.0.0.1:9000/mount_remove</mount_remove>
+      <listener_add>http://127.0.0.1:9000/listener_add</listener_add>
+      <listener_remove>http://127.0.0.1:9000/listener_remove</listener_remove>
+      <stream_auth>http://127.0.0.1:9000/stream_auth</stream_auth>
+    </listener_auth>
+  </authentication>
+
+  <directory>
+    <yp-url-timeout>15</yp-url-timeout>
+    <touch-freq>300</touch-freq>
+  </directory>
+
+  <listen-socket>
+    <port>8000</port>
+    <ssl>0</ssl>
+    <bind-address>0.0.0.0</bind-address>
+    <shoutcast-mount>/stream</shoutcast-mount>
+  </listen-socket>
+  <listen-socket>
+    <port>8443</port>
+    <ssl>1</ssl>
+    <bind-address>0.0.0.0</bind-address>
+  </listen-socket>
+
+  <http-headers>
+    <header name="Access-Control-Allow-Origin" value="*" />
+    <header name="Cache-Control" value="no-store" />
+  </http-headers>
+
+  <master-server></master-server>
+  <master-server-port>8000</master-server-port>
+  <master-update-interval>120</master-update-interval>
+  <master-password>${ICECAST_RELAY_PASSWORD}</master-password>
+
+  <relays>
+    <relay>
+      <server>upstream.example.com</server>
+      <port>8000</port>
+      <mount>/live</mount>
+      <local-mount>/relay-live</local-mount>
+      <on-demand>1</on-demand>
+      <relay-shoutcast-metadata>1</relay-shoutcast-metadata>
+      <relays-on-demand>1</relays-on-demand>
+    </relay>
+  </relays>
+
+  <mount>
+    <mount-name>/live</mount-name>
+    <default-type>audio/mpeg</default-type>
+    <dump-file>/tmp/live.dump</dump-file>
+    <intro>/usr/local/share/icecast/web/intro.mp3</intro>
+    <charset>UTF-8</charset>
+    <hidden>0</hidden>
+    <mp3-metadata-interval>8192</mp3-metadata-interval>
+  </mount>
+
+  <paths>
+    <basedir>/usr/local/share/icecast</basedir>
+    <logdir>/var/log/icecast</logdir>
+    <webroot>/usr/local/share/icecast/web</webroot>
+    <adminroot>/usr/local/share/icecast/admin</adminroot>
+    <pidfile>/var/run/icecast.pid</pidfile>
+    <alias source="/status" destination="/status.xsl" />
+    <ssl-certificate>/etc/ssl/certs/cloudflare-origin.pem</ssl-certificate>
+  </paths>
+
+  <logging>
+    <accesslog>access.log</accesslog>
+    <errorlog>error.log</errorlog>
+    <playlistlog>playlist.log</playlistlog>
+    <loglevel>3</loglevel>
+    <logsize>10000</logsize>
+    <logarchive>1</logarchive>
+  </logging>
+
+  <security>
+    <chroot>0</chroot>
+    <changeowner>
+      <user>icecast</user>
+      <group>icecast</group>
+    </changeowner>
+  </security>
+
+  <fileserve>1</fileserve>
+</icecast>
