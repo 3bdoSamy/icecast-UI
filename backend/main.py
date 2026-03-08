@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, config, mounts, runtime, logs, nginx_control, listener_auth
+from routers import auth, config, mounts, runtime, logs
 
 app = FastAPI(title="Icecast Control Center API", version="1.0.0")
 
