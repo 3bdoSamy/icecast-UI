@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    container_name: icecast_backend
+    restart: unless-stopped
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ICECAST_ADMIN_USER=${ICECAST_ADMIN_USER}
+      - ICECAST_ADMIN_PASSWORD=${ICECAST_ADMIN_PASSWORD}
+      - ICECAST_ADMIN_URL=http://127.0.0.1:8000
+      - ICECAST_STATS_URL=http://127.0.0.1:8000/status-json.xsl
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./data/icecast:/data/icecast
+      - /usr/local/etc:/usr/local/etc
+      - ./data/control:/data/control
+      - /etc/nginx:/etc/nginx
+      - /etc/ssl:/etc/ssl
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /usr/bin/systemctl:/usr/bin/systemctl:ro
+      - /usr/sbin/nginx:/usr/sbin/nginx:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+    network_mode: host
+
+  frontend:
+    build: ./frontend
+    container_name: icecast_frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8001
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
