@@ -25,6 +25,8 @@ export default function Page() {
   const [streamUser, setStreamUser] = useState('source')
   const [streamToken, setStreamToken] = useState('')
   const [wsInterval, setWsInterval] = useState('2')
+  const [certPem, setCertPem] = useState('')
+  const [keyPem, setKeyPem] = useState('')
 
   useEffect(() => {
     fetch(`${apiBase}/api/config/schema`).then((r) => r.json()).then((s) => {
@@ -53,6 +55,7 @@ export default function Page() {
   }, [setStats])
 
   const data = useMemo(() => (analytics.historical_listeners || []).slice(-40).map((x: any) => ({
+    ts: new Date((x.ts || 0) * 1000).toLocaleTimeString(), listeners: x.listeners || 0, cpu: x.cpu || 0, ram: x.ram || 0, disk: x.disk || 0
     ts: new Date((x.ts || 0) * 1000).toLocaleTimeString(), listeners: x.listeners || 0, cpu: x.cpu || 0, ram: x.ram || 0
   })), [analytics])
 
@@ -93,6 +96,27 @@ export default function Page() {
     setResult(JSON.stringify(await resp.json(), null, 2))
   }
 
+
+
+  async function uploadSsl() {
+    const mode = sslMode === 'cloudflare' ? 'cloudflare' : 'custom'
+    const resp = await fetch(`${apiBase}/api/nginx/ssl/${mode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cert_pem: certPem, key_pem: keyPem })
+    })
+    setResult(JSON.stringify(await resp.json(), null, 2))
+  }
+
+  async function runLetsEncrypt() {
+    const resp = await fetch(`${apiBase}/api/nginx/ssl/letsencrypt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, https_enabled: true, ssl_mode: 'letsencrypt', cloudflare_enabled: false, icecast_port: Number(icecastPort) })
+    })
+    setResult(JSON.stringify(await resp.json(), null, 2))
+  }
+
   async function issueStreamToken() {
     const resp = await fetch(`${apiBase}/api/listener-auth/stream-token`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mount: streamMount, username: streamUser })
@@ -104,12 +128,14 @@ export default function Page() {
   return (
     <DashboardShell>
       <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold">Broadcast Dashboard</h2><span className="text-green-400">Server Online</span></div>
+      <div className="grid md:grid-cols-6 gap-4 mb-3">
       <div className="grid md:grid-cols-5 gap-4 mb-3">
         <StatCard label="Listeners" value={listeners} />
         <StatCard label="Sources" value={sources} />
         <StatCard label="Bandwidth" value={bandwidth} />
         <StatCard label="CPU %" value={Number(analytics.cpu_usage || 0)} />
         <StatCard label="RAM %" value={Number(analytics.ram_usage || 0)} />
+        <StatCard label="Disk %" value={Number(analytics.disk_usage || 0)} />
       </div>
 
       <div className="flex items-center gap-2 mb-4"><label className="text-sm">Realtime interval</label><select className="bg-zinc-900 border border-zinc-700 rounded p-2" value={wsInterval} onChange={(e)=>setWsInterval(e.target.value)}><option>1</option><option>2</option><option>5</option><option>10</option><option>30</option></select><button className="bg-cyan-700 px-3 py-2 rounded" onClick={saveWsInterval}>Save WS Interval</button></div>
@@ -134,6 +160,14 @@ export default function Page() {
           <select className="bg-zinc-900 border border-zinc-700 rounded p-1" value={sslMode} onChange={(e) => setSslMode(e.target.value)}><option value="none">none</option><option value="cloudflare">cloudflare</option><option value="letsencrypt">letsencrypt</option><option value="custom">custom</option></select>
         </div>
         <div className="flex gap-2"><button className="bg-blue-600 px-3 py-2 rounded">Save</button><button type="button" className="bg-zinc-700 px-3 py-2 rounded" onClick={() => nginxAction('test')}>nginx -t</button><button type="button" className="bg-zinc-700 px-3 py-2 rounded" onClick={() => nginxAction('reload')}>Reload</button><button type="button" className="bg-zinc-700 px-3 py-2 rounded" onClick={() => nginxAction('restart')}>Restart</button></div>
+        <div className="grid md:grid-cols-2 gap-2">
+          <textarea className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 h-24" placeholder="certificate PEM" value={certPem} onChange={(e) => setCertPem(e.target.value)} />
+          <textarea className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 h-24" placeholder="private key PEM" value={keyPem} onChange={(e) => setKeyPem(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <button type="button" className="bg-purple-700 px-3 py-2 rounded" onClick={uploadSsl}>Upload SSL (Cloudflare/Custom)</button>
+          <button type="button" className="bg-emerald-700 px-3 py-2 rounded" onClick={runLetsEncrypt}>Run Let's Encrypt</button>
+        </div>
       </form>
 
       <div className="rounded-xl border border-zinc-800 p-4 space-y-3 mb-6">

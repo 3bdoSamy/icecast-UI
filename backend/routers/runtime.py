@@ -53,6 +53,7 @@ async def _collect_stats():
     total_bandwidth = float(icestats.get('bandwidth', 0) or 0)
     cpu = psutil.cpu_percent(interval=None)
     mem = psutil.virtual_memory().percent
+    disk = psutil.disk_usage('/').percent
     bps = _network_bps()
 
     per_mount = []
@@ -62,6 +63,7 @@ async def _collect_stats():
         listener_history[mount].append({'ts': ts, 'listeners': listeners})
         per_mount.append({'mount': mount, 'listeners': listeners, 'bitrate': src.get('bitrate', 0)})
 
+    global_history.append({'ts': ts, 'listeners': total_listeners, 'bandwidth': total_bandwidth, 'cpu': cpu, 'ram': mem, 'disk': disk, 'net_bps': bps})
     global_history.append({'ts': ts, 'listeners': total_listeners, 'bandwidth': total_bandwidth, 'cpu': cpu, 'ram': mem, 'net_bps': bps})
     top_mounts = sorted(per_mount, key=lambda m: m['listeners'], reverse=True)[:10]
 
@@ -71,6 +73,7 @@ async def _collect_stats():
             'cpu_usage': cpu,
             'ram_usage': mem,
             'network_bandwidth_bps': bps,
+            'disk_usage': disk,
             'listener_peaks': max((x['listeners'] for x in global_history), default=0),
             'historical_listeners': list(global_history),
             'top_mounts': top_mounts,
