@@ -56,6 +56,7 @@ export default function Page() {
 
   const data = useMemo(() => (analytics.historical_listeners || []).slice(-40).map((x: any) => ({
     ts: new Date((x.ts || 0) * 1000).toLocaleTimeString(), listeners: x.listeners || 0, cpu: x.cpu || 0, ram: x.ram || 0, disk: x.disk || 0
+    ts: new Date((x.ts || 0) * 1000).toLocaleTimeString(), listeners: x.listeners || 0, cpu: x.cpu || 0, ram: x.ram || 0
   })), [analytics])
 
   async function saveNginxSettings(e: FormEvent) {
@@ -128,6 +129,7 @@ export default function Page() {
     <DashboardShell>
       <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold">Broadcast Dashboard</h2><span className="text-green-400">Server Online</span></div>
       <div className="grid md:grid-cols-6 gap-4 mb-3">
+      <div className="grid md:grid-cols-5 gap-4 mb-3">
         <StatCard label="Listeners" value={listeners} />
         <StatCard label="Sources" value={sources} />
         <StatCard label="Bandwidth" value={bandwidth} />

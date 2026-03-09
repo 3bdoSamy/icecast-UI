@@ -31,3 +31,7 @@ If you previously cloned an old copy, remove it and clone again before installin
 
 
 > Note: install from the repository default branch unless a specific release branch is explicitly available.
+## Install
+```bash
+bash install.sh
+```
