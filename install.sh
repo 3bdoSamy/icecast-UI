@@ -9,6 +9,10 @@ ICECAST_CONF="/usr/local/etc/icecast.xml"
 ICECAST_SERVICE="/etc/systemd/system/icecast.service"
 CONTROL_SERVICE="/etc/systemd/system/icecast-control-center.service"
 NGINX_CONF="/etc/nginx/conf.d/icecast.conf"
+INSTALLER_VERSION="2026-03-09-3"
+
+ARCH_RAW="$(uname -m 2>/dev/null || true)"
+ARCH="${ARCH_RAW:-unknown}"
 
 ARCH_RAW="$(uname -m 2>/dev/null || true)"
 ARCH="${ARCH_RAW:-unknown}"
@@ -336,6 +340,8 @@ SERVICE
   systemctl enable icecast-control-center --now
 }
 
+echo "[INFO] Icecast Control Center installer version: $INSTALLER_VERSION"
+echo "Updating apt cache for architecture: $ARCH_RAW ($PLATFORM)"
 echo "Updating apt cache for architecture: $ARCH_RAW ($PLATFORM)"
 echo "Updating apt cache for architecture: $ARCH ($PLATFORM)"
 echo "Updating apt cache..."

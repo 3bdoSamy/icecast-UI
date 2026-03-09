@@ -68,3 +68,20 @@ If you ever see syntax errors near `x86_64|amd64)` or unexpected EOF, your local
 
 
 If `git checkout feature/install-hotfix-no-case` fails, skip that step and install directly from the default branch; that branch may not exist in your clone or remote.
+
+
+## Fast sanity check before install
+Run this inside the cloned repo:
+```bash
+head -n 20 install.sh | nl -ba
+bash -n install.sh
+```
+You should see an `INSTALLER_VERSION` line near the top and no syntax output from `bash -n`.
+
+## If your clone still looks old
+Force-refresh the scripts from the default branch:
+```bash
+cd ~/Desktop/icecast-control-center
+git checkout -- install.sh update.sh uninstall.sh
+git pull --ff-only
+```
