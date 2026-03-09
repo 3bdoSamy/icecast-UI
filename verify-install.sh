@@ -24,6 +24,14 @@ echo "[OK] Shell syntax checks passed."
 echo "[INFO] Compose detection:"
 if command -v docker-compose >/dev/null 2>&1; then
   echo "[OK] docker-compose found at $(command -v docker-compose)"
+else
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    echo "[OK] docker compose (plugin) available"
+  else
+    echo "[ERROR] Neither docker-compose nor docker compose is available."
+    echo "       Install one of them before running install.sh"
+    exit 1
+  fi
 elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   echo "[OK] docker compose (plugin) available"
 else

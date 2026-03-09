@@ -13,6 +13,15 @@ INSTALLER_VERSION="2026-03-09-3"
 
 ARCH_RAW="$(uname -m 2>/dev/null || true)"
 ARCH="${ARCH_RAW:-unknown}"
+if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
+  PLATFORM="amd64"
+else
+  if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    PLATFORM="arm64"
+  else
+    PLATFORM="unknown"
+    echo "[WARN] Unrecognized architecture: $ARCH. Continuing."
+  fi
 
 ARCH_RAW="$(uname -m 2>/dev/null || true)"
 ARCH="${ARCH_RAW:-unknown}"
@@ -142,6 +151,14 @@ ensure_docker() {
   if command -v docker-compose >/dev/null 2>&1; then
     COMPOSE_BIN="$(command -v docker-compose)"
     COMPOSE_SUBCOMMAND=""
+  else
+    if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+      COMPOSE_BIN="$(command -v docker)"
+      COMPOSE_SUBCOMMAND="compose"
+    else
+      echo "[ERROR] Could not find a working Docker Compose command (docker-compose or docker compose)."
+      exit 1
+    fi
   elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
     COMPOSE_BIN="$(command -v docker)"
     COMPOSE_SUBCOMMAND="compose"
