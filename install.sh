@@ -29,6 +29,26 @@ fi
 if command -v docker-compose >/dev/null 2>&1; then
   COMPOSE_BIN="$(command -v docker-compose)"
   COMPOSE_SUBCOMMAND=""
+else
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    COMPOSE_BIN="$(command -v docker)"
+    COMPOSE_SUBCOMMAND="compose"
+  else
+    COMPOSE_BIN=""
+    COMPOSE_SUBCOMMAND=""
+  fi
+fi
+
+run_compose() {
+  if [ -z "$COMPOSE_BIN" ]; then
+    echo "[ERROR] Docker Compose is not configured."
+    exit 1
+  fi
+  if [ -n "$COMPOSE_SUBCOMMAND" ]; then
+    "$COMPOSE_BIN" "$COMPOSE_SUBCOMMAND" "$@"
+    return
+  fi
+  "$COMPOSE_BIN" "$@"
 elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   COMPOSE_BIN="$(command -v docker)"
   COMPOSE_SUBCOMMAND="compose"

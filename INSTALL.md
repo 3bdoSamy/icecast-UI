@@ -92,3 +92,16 @@ git pull --ff-only
 
 
 If preflight fails, do not run installer yet; fix the reported issue first.
+
+
+## Emergency repair (if syntax error still appears)
+```bash
+cd ~/Desktop/icecast-control-center
+curl -fsSL -o install.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/install.sh
+curl -fsSL -o update.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/update.sh
+curl -fsSL -o uninstall.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/uninstall.sh
+curl -fsSL -o verify-install.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/verify-install.sh
+chmod +x install.sh update.sh uninstall.sh verify-install.sh
+./verify-install.sh
+sudo -E bash ./install.sh
+```
