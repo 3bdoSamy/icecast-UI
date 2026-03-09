@@ -21,6 +21,21 @@ else
   PLATFORM="unknown"
   echo "[WARN] Unrecognized architecture: $ARCH. Continuing."
 fi
+
+if command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_BIN="/usr/bin/docker-compose"
+  COMPOSE_SUBCOMMAND=""
+else
+  COMPOSE_BIN="/usr/bin/docker"
+  COMPOSE_SUBCOMMAND="compose"
+fi
+
+run_compose() {
+  if [ -n "$COMPOSE_SUBCOMMAND" ]; then
+    "$COMPOSE_BIN" "$COMPOSE_SUBCOMMAND" "$@"
+  else
+    "$COMPOSE_BIN" "$@"
+  fi
 case "$ARCH" in
   x86_64|amd64) PLATFORM="amd64" ;;
   aarch64|arm64) PLATFORM="arm64" ;;
@@ -90,6 +105,11 @@ ensure_docker() {
   install_pkg docker-compose
 
   if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_BIN="/usr/bin/docker-compose"
+    COMPOSE_SUBCOMMAND=""
+  else
+    COMPOSE_BIN="/usr/bin/docker"
+    COMPOSE_SUBCOMMAND="compose"
     COMPOSE="docker-compose"
     COMPOSE_EXEC="/usr/bin/docker-compose"
   else
@@ -253,6 +273,14 @@ ENV
     exit 1
   fi
 
+  run_compose --env-file "$PROJECT_DIR/.env" -f "$PROJECT_DIR/docker-compose.yml" up -d --build
+
+  if [ -n "$COMPOSE_SUBCOMMAND" ]; then
+    COMPOSE_SERVICE_PREFIX="$COMPOSE_BIN $COMPOSE_SUBCOMMAND"
+  else
+    COMPOSE_SERVICE_PREFIX="$COMPOSE_BIN"
+  fi
+
   run_compose "--env-file '$PROJECT_DIR/.env' -f '$PROJECT_DIR/docker-compose.yml' up -d --build"
     echo "[ERROR] Port conflict detected on 3000/8001."; exit 1
   fi
@@ -270,6 +298,8 @@ Requires=docker.service
 Type=oneshot
 WorkingDirectory=$PROJECT_DIR
 RemainAfterExit=true
+ExecStart=$COMPOSE_SERVICE_PREFIX --env-file .env up -d
+ExecStop=$COMPOSE_SERVICE_PREFIX --env-file .env down
 ExecStart=$COMPOSE_EXEC --env-file .env up -d
 ExecStop=$COMPOSE_EXEC --env-file .env down
 ExecStart=/usr/bin/docker compose --env-file .env up -d

@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 PROJECT_DIR="/opt/icecast-control-center"
+
+compose() {
+  if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+  else
+    docker compose "$@"
+  fi
+}
+
+if [ -d "$PROJECT_DIR" ]; then
+  cd "$PROJECT_DIR"
+  compose --env-file .env down -v --rmi all || true
 if [ -d "$PROJECT_DIR" ]; then
   cd "$PROJECT_DIR"
   docker compose --env-file .env down -v --rmi all || true
