@@ -64,6 +64,7 @@ async def _collect_stats():
         per_mount.append({'mount': mount, 'listeners': listeners, 'bitrate': src.get('bitrate', 0)})
 
     global_history.append({'ts': ts, 'listeners': total_listeners, 'bandwidth': total_bandwidth, 'cpu': cpu, 'ram': mem, 'disk': disk, 'net_bps': bps})
+    global_history.append({'ts': ts, 'listeners': total_listeners, 'bandwidth': total_bandwidth, 'cpu': cpu, 'ram': mem, 'net_bps': bps})
     top_mounts = sorted(per_mount, key=lambda m: m['listeners'], reverse=True)[:10]
 
     return {

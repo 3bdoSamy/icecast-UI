@@ -28,3 +28,7 @@ sudo -E bash ./install.sh
 ```
 
 If you previously cloned an old copy, remove it and clone again before installing.
+## Install
+```bash
+bash install.sh
+```
