@@ -10,12 +10,17 @@ compose() {
   else
     echo "[ERROR] Could not find a working Docker Compose command (docker-compose or docker compose)." >&2
     exit 1
+  else
+    docker compose "$@"
   fi
 }
 
 if [ -d "$PROJECT_DIR" ]; then
   cd "$PROJECT_DIR"
   compose --env-file .env down -v --rmi all || true
+if [ -d "$PROJECT_DIR" ]; then
+  cd "$PROJECT_DIR"
+  docker compose --env-file .env down -v --rmi all || true
 fi
 systemctl disable --now icecast-control-center || true
 systemctl disable --now icecast || true
