@@ -30,6 +30,11 @@ bash -n uninstall.sh
 
 # run installer
 sudo -E bash ./install.sh
+## 2) Clone and install
+```bash
+git clone <YOUR-REPO-URL> icecast-control-center
+cd icecast-control-center
+bash install.sh
 ```
 
 The installer automatically:
@@ -43,6 +48,16 @@ The installer automatically:
 Open `http://SERVER-IP:3000`.
 
 ## 5) Maintenance
+## 3) Use dashboard
+Open `http://SERVER-IP:3000`.
+
+You can now control:
+- All Icecast config sections (with backup + xmllint validation)
+- Mounts, relays, listener auth (htpasswd + URL auth)
+- Nginx domain + SSL + Cloudflare mode + `nginx -t` / reload / restart
+- Analytics (CPU, RAM, bandwidth, peaks, history, top mounts)
+
+## 4) Maintenance
 ```bash
 bash update.sh
 bash uninstall.sh
