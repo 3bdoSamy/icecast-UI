@@ -5,6 +5,31 @@
 ssh root@YOUR_SERVER_IP
 ```
 
+## 2) Clean old copy (important)
+```bash
+cd ~/Desktop || cd ~
+rm -rf icecast-control-center
+```
+
+## 3) Clone fresh and install
+```bash
+git clone https://github.com/3bdoSamy/icecast-UI.git icecast-control-center
+cd icecast-control-center
+
+# normalize scripts and verify syntax
+apt-get update
+apt-get install -y dos2unix
+dos2unix install.sh update.sh uninstall.sh
+perl -pi -e 's/\r$//' install.sh update.sh uninstall.sh
+sed -i '1s/^\xEF\xBB\xBF//' install.sh
+chmod +x install.sh update.sh uninstall.sh
+
+bash -n install.sh
+bash -n update.sh
+bash -n uninstall.sh
+
+# run installer
+sudo -E bash ./install.sh
 ## 2) Clone and install
 ```bash
 git clone <YOUR-REPO-URL> icecast-control-center
@@ -19,6 +44,10 @@ The installer automatically:
 - Installs and configures `nginx-extras`
 - Starts dashboard backend + frontend containers
 
+## 4) Use dashboard
+Open `http://SERVER-IP:3000`.
+
+## 5) Maintenance
 ## 3) Use dashboard
 Open `http://SERVER-IP:3000`.
 
@@ -33,3 +62,6 @@ You can now control:
 bash update.sh
 bash uninstall.sh
 ```
+
+## Troubleshooting
+If you ever see syntax errors near `x86_64|amd64)` or unexpected EOF, your local copy is stale/corrupted. Re-run steps 2 and 3 exactly to fetch a clean copy.
