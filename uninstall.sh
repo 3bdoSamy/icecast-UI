@@ -5,6 +5,11 @@ PROJECT_DIR="/opt/icecast-control-center"
 compose() {
   if command -v docker-compose >/dev/null 2>&1; then
     docker-compose "$@"
+  elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+  else
+    echo "[ERROR] Could not find a working Docker Compose command (docker-compose or docker compose)." >&2
+    exit 1
   else
     docker compose "$@"
   fi

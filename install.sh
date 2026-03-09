@@ -23,6 +23,14 @@ else
 fi
 
 if command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_BIN="$(command -v docker-compose)"
+  COMPOSE_SUBCOMMAND=""
+elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+  COMPOSE_BIN="$(command -v docker)"
+  COMPOSE_SUBCOMMAND="compose"
+else
+  COMPOSE_BIN=""
+  COMPOSE_SUBCOMMAND=""
   COMPOSE_BIN="/usr/bin/docker-compose"
   COMPOSE_SUBCOMMAND=""
 else
@@ -102,6 +110,20 @@ ensure_docker() {
     sh /tmp/get-docker.sh
   fi
 
+  if ! command -v docker-compose >/dev/null 2>&1 && ! (command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1); then
+    install_pkg docker-compose || true
+    install_pkg docker-compose-plugin || true
+  fi
+
+  if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_BIN="$(command -v docker-compose)"
+    COMPOSE_SUBCOMMAND=""
+  elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    COMPOSE_BIN="$(command -v docker)"
+    COMPOSE_SUBCOMMAND="compose"
+  else
+    echo "[ERROR] Could not find a working Docker Compose command (docker-compose or docker compose)."
+    exit 1
   install_pkg docker-compose
 
   if command -v docker-compose >/dev/null 2>&1; then

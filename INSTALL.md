@@ -65,3 +65,6 @@ bash uninstall.sh
 
 ## Troubleshooting
 If you ever see syntax errors near `x86_64|amd64)` or unexpected EOF, your local copy is stale/corrupted. Re-run steps 2 and 3 exactly to fetch a clean copy.
+
+
+If `git checkout feature/install-hotfix-no-case` fails, skip that step and install directly from the default branch; that branch may not exist in your clone or remote.
