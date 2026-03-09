@@ -10,6 +10,8 @@ ICECAST_SERVICE="/etc/systemd/system/icecast.service"
 CONTROL_SERVICE="/etc/systemd/system/icecast-control-center.service"
 NGINX_CONF="/etc/nginx/conf.d/icecast.conf"
 
+ARCH_RAW="$(uname -m 2>/dev/null || true)"
+ARCH="${ARCH_RAW:-unknown}"
 ARCH="$(uname -m)"
 if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
   PLATFORM="amd64"
@@ -282,6 +284,7 @@ SERVICE
   systemctl enable icecast-control-center --now
 }
 
+echo "Updating apt cache for architecture: $ARCH_RAW ($PLATFORM)"
 echo "Updating apt cache for architecture: $ARCH ($PLATFORM)"
 echo "Updating apt cache..."
 apt update
