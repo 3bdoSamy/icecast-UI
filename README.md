@@ -23,6 +23,7 @@ Full control plane for Icecast / Icecast-KH with web UI + API.
 git clone https://github.com/3bdoSamy/icecast-UI.git icecast-control-center
 cd icecast-control-center
 chmod +x install.sh update.sh uninstall.sh
+./verify-install.sh
 bash -n install.sh && bash -n update.sh && bash -n uninstall.sh
 sudo -E bash ./install.sh
 ```

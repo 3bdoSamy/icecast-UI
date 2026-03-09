@@ -24,6 +24,10 @@ perl -pi -e 's/\r$//' install.sh update.sh uninstall.sh
 sed -i '1s/^\xEF\xBB\xBF//' install.sh
 chmod +x install.sh update.sh uninstall.sh
 
+./verify-install.sh
+
+# run installer
+sudo -E bash ./install.sh
 bash -n install.sh
 bash -n update.sh
 bash -n uninstall.sh
@@ -85,3 +89,6 @@ cd ~/Desktop/icecast-control-center
 git checkout -- install.sh update.sh uninstall.sh
 git pull --ff-only
 ```
+
+
+If preflight fails, do not run installer yet; fix the reported issue first.
