@@ -14,6 +14,10 @@ cd "$PROJECT_DIR"
 git pull || true
 compose --env-file .env build
 compose --env-file .env up -d
+cd "$PROJECT_DIR"
+git pull || true
+docker compose --env-file .env build
+docker compose --env-file .env up -d
 systemctl restart icecast-control-center
 systemctl reload nginx
 systemctl restart icecast
