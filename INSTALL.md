@@ -84,3 +84,17 @@ chmod +x install.sh update.sh uninstall.sh verify-install.sh
 ./verify-install.sh
 sudo -E bash ./install.sh
 ```
+
+
+## Full removal commands (manual fallback)
+If uninstall script ever fails on your server, run:
+```bash
+sudo systemctl disable --now icecast-control-center 2>/dev/null || true
+sudo systemctl disable --now icecast 2>/dev/null || true
+sudo rm -f /etc/systemd/system/icecast-control-center.service /etc/systemd/system/icecast.service
+sudo systemctl daemon-reload
+sudo rm -f /etc/nginx/conf.d/icecast.conf
+sudo systemctl reload nginx 2>/dev/null || true
+sudo rm -rf /opt/icecast-control-center /usr/local/src/icecast-kh
+rm -rf ~/Desktop/icecast-control-center ~/icecast-control-center
+```
