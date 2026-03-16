@@ -28,6 +28,17 @@ chmod +x install.sh update.sh uninstall.sh
 
 # run installer
 sudo -E bash ./install.sh
+bash -n install.sh
+bash -n update.sh
+bash -n uninstall.sh
+
+# run installer
+sudo -E bash ./install.sh
+## 2) Clone and install
+```bash
+git clone <YOUR-REPO-URL> icecast-control-center
+cd icecast-control-center
+bash install.sh
 ```
 
 The installer automatically:
@@ -41,6 +52,16 @@ The installer automatically:
 Open `http://SERVER-IP:3000`.
 
 ## 5) Maintenance
+## 3) Use dashboard
+Open `http://SERVER-IP:3000`.
+
+You can now control:
+- All Icecast config sections (with backup + xmllint validation)
+- Mounts, relays, listener auth (htpasswd + URL auth)
+- Nginx domain + SSL + Cloudflare mode + `nginx -t` / reload / restart
+- Analytics (CPU, RAM, bandwidth, peaks, history, top mounts)
+
+## 4) Maintenance
 ```bash
 bash update.sh
 bash uninstall.sh
@@ -76,25 +97,11 @@ If preflight fails, do not run installer yet; fix the reported issue first.
 ## Emergency repair (if syntax error still appears)
 ```bash
 cd ~/Desktop/icecast-control-center
-# refresh files from the currently checked-out branch (not hardcoded main)
-git fetch --all --prune
-git reset --hard "origin/$(git rev-parse --abbrev-ref HEAD)"
-
+curl -fsSL -o install.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/install.sh
+curl -fsSL -o update.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/update.sh
+curl -fsSL -o uninstall.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/uninstall.sh
+curl -fsSL -o verify-install.sh https://raw.githubusercontent.com/3bdoSamy/icecast-UI/main/verify-install.sh
 chmod +x install.sh update.sh uninstall.sh verify-install.sh
 ./verify-install.sh
 sudo -E bash ./install.sh
-```
-
-
-## Full removal commands (manual fallback)
-If uninstall script ever fails on your server, run:
-```bash
-sudo systemctl disable --now icecast-control-center 2>/dev/null || true
-sudo systemctl disable --now icecast 2>/dev/null || true
-sudo rm -f /etc/systemd/system/icecast-control-center.service /etc/systemd/system/icecast.service
-sudo systemctl daemon-reload
-sudo rm -f /etc/nginx/conf.d/icecast.conf
-sudo systemctl reload nginx 2>/dev/null || true
-sudo rm -rf /opt/icecast-control-center /usr/local/src/icecast-kh
-rm -rf ~/Desktop/icecast-control-center ~/icecast-control-center
 ```
